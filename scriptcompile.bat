@@ -1,4 +1,9 @@
 @echo off
+rem Set variables for directories
+set SRC_DIR=src
+set LIB_DIR=lib
+set OUT_DIR=out
+set OUT_JAR=FrontController.jar
 
 rem Répertoires
 set TEMP_SRC=temp_src
