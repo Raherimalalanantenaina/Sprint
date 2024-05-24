@@ -6,7 +6,7 @@ set local=C:\Users\26134\Documents\S4\Mrnaina\sprint0_2777
 set webapps=C:\Program Files\Apache Software Foundation\Tomcat 10.1\webapps
 set OUT_LIB=C:\Users\26134\Documents\S4\Mrnaina\sprint0_2777\out
 set name=Sprinttest
-set OUT_JAR=FrontControllerServelet.jar
+set OUT_JAR=FrontController.jar
 
 
 REM Supprimer le dossier temporaire s'il existe déjà

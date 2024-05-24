@@ -3,7 +3,7 @@ rem Set variables for directories
 set SRC_DIR=src
 set LIB_DIR=lib
 set OUT_DIR=out
-set OUT_JAR=FrontControllerServelet.jar
+set OUT_JAR=FrontController.jar
 
 rem Compile Java classes
 echo Compiling Java classes...
