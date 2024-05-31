@@ -1,4 +1,4 @@
-package classe;
+package map;
 
 public class Mapping {
     String className;
