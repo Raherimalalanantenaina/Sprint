@@ -1,19 +1,17 @@
 package mg.itu.prom16.controllers;
 
 import mg.itu.prom16.annotations.*;
-
+import mg.itu.prom16.models.ModelView;  // Import correct du ModelView
+import mg.itu.prom16.map.*;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.net.URLDecoder;
 import java.util.*;
-
-import javax.swing.Spring;
-
+import jakarta.servlet.RequestDispatcher;  // Import correct pour RequestDispatcher
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import map.Mapping;
 
 public class FrontController extends HttpServlet {
     private List<String> controller = new ArrayList<>();
@@ -32,27 +30,35 @@ public class FrontController extends HttpServlet {
             throws ServletException, IOException {
         PrintWriter out = response.getWriter();
         String[] requestUrlSplitted = request.getRequestURL().toString().split("/");
-        String controllerSearched = requestUrlSplitted[requestUrlSplitted.length-1];
-        
+        String controllerSearched = requestUrlSplitted[requestUrlSplitted.length - 1];
+
         response.setContentType("text/html");
 
         if (!lien.containsKey(controllerSearched)) {
-            out.println("<p>"+"Methode non trouver."+"</p>");
-        }
-        else {
-            try{
-
+            out.println("<p>" + "Méthode non trouvée." + "</p>");
+        } else {
+            try {
                 Mapping mapping = lien.get(controllerSearched);
-                Class<?> clazz=Class.forName(mapping.getClassName());
-                Method method=clazz.getMethod(mapping.getMethodeName());
-                Object object=clazz.getDeclaredConstructor().newInstance();
-                Object returnValue=method.invoke(object);
-                String stringValue=(String) returnValue;
-                out.println("Methode trouvee dans " + stringValue);
-            }catch (Exception e) {
+                Class<?> clazz = Class.forName(mapping.getClassName());
+                Method method = clazz.getMethod(mapping.getMethodeName());
+                Object object = clazz.getDeclaredConstructor().newInstance();
+                Object returnValue = method.invoke(object);
+
+                if (returnValue instanceof String) {
+                    out.println("Méthode trouvée dans " + (String) returnValue);
+                } else if (returnValue instanceof ModelView) {
+                    ModelView modelView = (ModelView) returnValue;
+                    for (Map.Entry<String, Object> entry : modelView.getData().entrySet()) {
+                        request.setAttribute(entry.getKey(), entry.getValue());
+                    }
+                    RequestDispatcher dispatcher = request.getRequestDispatcher(modelView.getUrl());
+                    dispatcher.forward(request, response);
+                } else {
+                    out.println("Type de données non reconnu");
+                }
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-
         }
         out.close();
     }
