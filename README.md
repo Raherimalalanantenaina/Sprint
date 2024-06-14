@@ -8,3 +8,9 @@
 
 *** SPRINT 2 ***
 -> Il faut annoter les methodes dans les controlleurs par l'annotation Get("nom-methode")
+
+
+
+
+****Sprint 6*****
+post depuis formulaire
