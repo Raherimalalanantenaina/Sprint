@@ -1,9 +1,10 @@
 package mg.itu.prom16.controllers;
 
-import mg.itu.prom16.annotations.Controller;
-import mg.itu.prom16.annotations.Get;
-import mg.itu.prom16.annotations.Post;
-import mg.itu.prom16.annotations.Param;
+// import mg.itu.prom16.annotations.Controller;
+// import mg.itu.prom16.annotations.Get;
+// import mg.itu.prom16.annotations.Post;
+// import mg.itu.prom16.annotations.Param;
+import mg.itu.prom16.annotations.*;
 import mg.itu.prom16.models.ModelView;
 import mg.itu.prom16.map.Mapping;
 
@@ -79,7 +80,7 @@ public class FrontController extends HttpServlet {
 
                 // Inject parameters
                 Object[] parameters = getMethodParameters(method, request);
-                
+
                 Object object = clazz.getDeclaredConstructor().newInstance();
                 Object returnValue = method.invoke(object, parameters);
 
@@ -178,6 +179,8 @@ public class FrontController extends HttpServlet {
                 Param param = parameters[i].getAnnotation(Param.class);
                 String paramValue = request.getParameter(param.value());
                 parameterValues[i] = paramValue; // Assuming all parameters are strings for simplicity
+            } else if (parameters[i].isAnnotationPresent(RequestObject.class)) {
+                parameterValues[i] = RequestMapper.mapRequestToObject(request, parameters[i].getType());
             }
         }
 
