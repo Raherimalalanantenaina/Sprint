@@ -5,24 +5,28 @@ import java.lang.reflect.Field;
 
 public class RequestMapper {
 
-    public static <T> T mapRequestToObject(HttpServletRequest request, Class<T> clazz) {
+    public static <T> T mapRequestToObject(HttpServletRequest request, Class<T> clazz)throws Exception{
         try {
             T instance = clazz.getDeclaredConstructor().newInstance();
-
+    
             for (Field field : clazz.getDeclaredFields()) {
                 RequestParam requestParam = field.getAnnotation(RequestParam.class);
                 String paramName = (requestParam != null) ? requestParam.value() : field.getName();
                 String paramValue = request.getParameter(paramName);
-
+    
                 if (paramValue != null) {
                     field.setAccessible(true);
                     field.set(instance, convertToFieldType(field.getType(), paramValue));
                 }
+                if (requestParam == null) {
+                    throw new Exception("ETU2777   la param n'exite pas'" + paramName + "' is missing");
+                }
+    
             }
-
+    
             return instance;
         } catch (Exception e) {
-            throw new RuntimeException("Error mapping request to object", e);
+            throw e;
         }
     }
 

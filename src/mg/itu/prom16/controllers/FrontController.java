@@ -1,13 +1,10 @@
 package mg.itu.prom16.controllers;
 
-// import mg.itu.prom16.annotations.Controller;
-// import mg.itu.prom16.annotations.Get;
-// import mg.itu.prom16.annotations.Post;
-// import mg.itu.prom16.annotations.Param;
 import mg.itu.prom16.annotations.*;
 import mg.itu.prom16.models.ModelView;
+import mg.itu.prom16.session.CustomSession;
 import mg.itu.prom16.map.Mapping;
-
+import mg.itu.prom16.session.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -97,7 +94,7 @@ public class FrontController extends HttpServlet {
                     out.println("Type de données non reconnu");
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                out.println(e.getMessage());
             }
         }
         out.close();
@@ -157,7 +154,7 @@ public class FrontController extends HttpServlet {
                                 }
                             }
                         } catch (Exception e) {
-                            throw e;
+                           throw e;
                         }
 
                     }
@@ -170,20 +167,36 @@ public class FrontController extends HttpServlet {
         }
     }
 
-    private Object[] getMethodParameters(Method method, HttpServletRequest request) {
+    private Object[] getMethodParameters(Method method, HttpServletRequest request) throws Exception {
         Parameter[] parameters = method.getParameters();
         Object[] parameterValues = new Object[parameters.length];
-
+    
         for (int i = 0; i < parameters.length; i++) {
-            if (parameters[i].isAnnotationPresent(Param.class)) {
-                Param param = parameters[i].getAnnotation(Param.class);
-                String paramValue = request.getParameter(param.value());
-                parameterValues[i] = paramValue; // Assuming all parameters are strings for simplicity
-            } else if (parameters[i].isAnnotationPresent(RequestObject.class)) {
-                parameterValues[i] = RequestMapper.mapRequestToObject(request, parameters[i].getType());
+            try {
+                if (parameters[i].isAnnotationPresent(Param.class)) {
+                    Param param = parameters[i].getAnnotation(Param.class);
+                    String paramValue = request.getParameter(param.value());
+                    
+                    // Vérifiez si le paramètre est nul ou vide
+                    if (param == null) {
+                        throw new Exception("ETU2777 Le paramètre " + param.value() + " est manquant.");
+                    }
+                    
+                    parameterValues[i] = paramValue; // En supposant que tous les paramètres sont des chaînes pour simplifier
+                }
+                if (parameters[i].isAnnotationPresent(RequestObject.class)) {
+                    parameterValues[i] = RequestMapper.mapRequestToObject(request, parameters[i].getType());
+                }
+                if (parameters[i].getType().equals(CustomSession.class)) {
+                    CustomSession session = new CustomSession(request.getSession());
+                    parameterValues[i] = session;
+                }
+            } catch (Exception e) {
+                throw e;
             }
         }
-
+    
         return parameterValues;
     }
+    
 }
