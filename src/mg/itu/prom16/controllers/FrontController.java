@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gson.Gson;
+
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -80,10 +82,22 @@ public class FrontController extends HttpServlet {
 
                 Object object = clazz.getDeclaredConstructor().newInstance();
                 Object returnValue = method.invoke(object, parameters);
-
-                if (returnValue instanceof String) {
+                if (method.isAnnotationPresent(RestApi.class)) {
+                    response.setContentType("application/json");
+                    Gson gson = new Gson();
+                    if (returnValue instanceof String) {
+                        String jsonResponse = gson.toJson(returnValue);
+                        out.println(jsonResponse);
+                    } else if (returnValue instanceof ModelView) {
+                        ModelView modelView = (ModelView) returnValue;
+                        String jsonResponse = gson.toJson(modelView.getData());
+                        out.println(jsonResponse);
+                    } else {
+                        out.println("Type de donnees non reconnu");
+                    }
+                }else if (returnValue instanceof String) {
                     out.println("Méthode trouvée dans " + returnValue);
-                } else if (returnValue instanceof ModelView) {
+                }else if (returnValue instanceof ModelView) {
                     ModelView modelView = (ModelView) returnValue;
                     for (Map.Entry<String, Object> entry : modelView.getData().entrySet()) {
                         request.setAttribute(entry.getKey(), entry.getValue());
