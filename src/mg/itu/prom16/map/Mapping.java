@@ -1,28 +1,38 @@
 package mg.itu.prom16.map;
+import java.util.*;
 
 public class Mapping {
     String className;
-    String methodeName;
+    List<VerbAction> verb;
 
 
-    public Mapping(String className, String methodeName) {
+    public Mapping(String className) {
         this.className = className;
-        this.methodeName = methodeName;
+        this.verb =new ArrayList<>();
     }
-    
+
     public String getClassName() {
         return className;
+    }
+
+    public void setVerbActions(VerbAction verbAction){
+        this.verb.add(verbAction);
     }
 
     public void setClassName(String className) {
         this.className = className;
     }
-
-    public String getMethodeName() {
-        return methodeName;
+    public List<VerbAction> getVerb(){
+        return verb;
     }
 
-    public void setMethodeName(String methodeName) {
-        this.methodeName = methodeName;
+    public boolean isVerbPresent(String verbToCheck) {
+        for (VerbAction action : this.verb) {
+            if (action.getVerb().equalsIgnoreCase(verbToCheck)) {
+                return true;
+            }
+        }
+        return false;
     }
+    
 }
