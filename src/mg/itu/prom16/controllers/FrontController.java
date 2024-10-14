@@ -31,6 +31,8 @@ public class FrontController extends HttpServlet {
     boolean checked = false;
     HashMap<String, Mapping> lien = new HashMap<>();
     String error = "";
+    String erreur="";
+    String detail="";
 
     @Override
     public void init() throws ServletException {
@@ -44,84 +46,110 @@ public class FrontController extends HttpServlet {
     }
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        PrintWriter out = response.getWriter();
-        String[] requestUrlSplitted = request.getRequestURL().toString().split("/");
-        String controllerSearched = requestUrlSplitted[requestUrlSplitted.length - 1];
+    throws ServletException, IOException {
+PrintWriter out = response.getWriter();
+String[] requestUrlSplitted = request.getRequestURL().toString().split("/");
+String controllerSearched = requestUrlSplitted[requestUrlSplitted.length - 1];
 
-        response.setContentType("text/html");
-        if (!error.isEmpty()) {
-            out.println(error);
-        } else if (!lien.containsKey(controllerSearched)) {
-            out.println("<p>Méthode non trouvée.</p>");
-        } else {
-            try {
-                Mapping mapping = lien.get(controllerSearched);
-                Class<?> clazz = Class.forName(mapping.getClassName());
-                Object object = clazz.getDeclaredConstructor().newInstance();
-                Method method = null;
+response.setContentType("text/html");
 
-                if (!mapping.isVerbPresent(request.getMethod())) {
-                    out.println("<p>Le verbe HTTP utilisé n'est pas pris en charge pour cette action.</p>");
-                }
+try {
+    if (!error.isEmpty()) {
+        erreur = error;
+        detail = "Une erreur est survenue lors du traitement de la requête.";
+        throw new Exception(detail);
+    } else if (!lien.containsKey(controllerSearched)) {
+        erreur = "Erreur 404";
+        detail = "Methode non trouvee : " + controllerSearched;
+        throw new Exception(detail);
+    }
 
-                for (Method m : clazz.getDeclaredMethods()) {
-                    for (VerbAction action : mapping.getVerb()) {
-                        if (m.getName().equals(action.getAction()) && action.getVerb().equalsIgnoreCase(request.getMethod())) {
-                     
-                            method = m;
-                            break; 
-                        }
-                    }
-                    if (method != null) {
-                        break;
-                    }
-                    
-                }
+    // Traitement de la requête
+    Mapping mapping = lien.get(controllerSearched);
+    Class<?> clazz = Class.forName(mapping.getClassName());
+    Object object = clazz.getDeclaredConstructor().newInstance();
+    Method method = null;
 
-                if (method == null) {
-                    out.println("<p>Aucune méthode correspondante trouvée.</p>");
-                    return;
-                }
+    // Vérification du verbe HTTP
+    if (!mapping.isVerbPresent(request.getMethod())) {
+        erreur = "Verbe HTTP non supporte";
+        detail = "Le verbe " + request.getMethod() + " n'est pas supporte pour cette action.";
+        throw new Exception(detail);
+    }
 
-                // Injecter les paramètres dans la méthode
-                Object[] parameters = getMethodParameters(method, request);
-
-                
-                Object returnValue = method.invoke(object, parameters);
-
-                // Gestion de l'API REST
-                if (method.isAnnotationPresent(RestApi.class)) {
-                    response.setContentType("application/json");
-                    Gson gson = new Gson();
-                    if (returnValue instanceof String) {
-                        String jsonResponse = gson.toJson(returnValue);
-                        out.println(jsonResponse);
-                    } else if (returnValue instanceof ModelView) {
-                        ModelView modelView = (ModelView) returnValue;
-                        String jsonResponse = gson.toJson(modelView.getData());
-                        out.println(jsonResponse);
-                    } else {
-                        out.println("Type de données non reconnu");
-                    }
-                } else if (returnValue instanceof String) {
-                    out.println("Méthode trouvée dans " + returnValue);
-                } else if (returnValue instanceof ModelView) {
-                    ModelView modelView = (ModelView) returnValue;
-                    for (Map.Entry<String, Object> entry : modelView.getData().entrySet()) {
-                        request.setAttribute(entry.getKey(), entry.getValue());
-                    }
-                    RequestDispatcher dispatcher = request.getRequestDispatcher(modelView.getUrl());
-                    dispatcher.forward(request, response);
-                } else {
-                    out.println("Type de données non reconnu");
-                }
-            } catch (Exception e) {
-                out.println(e.getMessage());
+    // Recherche de la méthode correspondante
+    for (Method m : clazz.getDeclaredMethods()) {
+        for (VerbAction action : mapping.getVerb()) {
+            if (m.getName().equals(action.getAction()) && action.getVerb().equalsIgnoreCase(request.getMethod())) {
+                method = m;
+                break;
             }
         }
-        out.close();
+        if (method != null) {
+            break;
+        }
     }
+
+    // Vérification de la méthode trouvée
+    if (method == null) {
+        error = "Erreur 404";
+        detail = "Aucune methode correspondante trouvee pour : " + controllerSearched;
+        throw new Exception(detail);
+    }
+
+    // Injecter les paramètres dans la méthode
+    Object[] parameters = getMethodParameters(method, request);
+    Object returnValue = method.invoke(object, parameters);
+
+    // Gestion de l'API REST
+    if (method.isAnnotationPresent(RestApi.class)) {
+        response.setContentType("application/json");
+        Gson gson = new Gson();
+        if (returnValue instanceof String) {
+            String jsonResponse = gson.toJson(returnValue);
+            out.println(jsonResponse);
+        } else if (returnValue instanceof ModelView) {
+            ModelView modelView = (ModelView) returnValue;
+            String jsonResponse = gson.toJson(modelView.getData());
+            out.println(jsonResponse);
+        } else {
+            out.println("Type de donnees non reconnu");
+        }
+    } else if (returnValue instanceof String) {
+        out.println("Methode trouvee dans " + returnValue);
+    } else if (returnValue instanceof ModelView) {
+        ModelView modelView = (ModelView) returnValue;
+        for (Map.Entry<String, Object> entry : modelView.getData().entrySet()) {
+            request.setAttribute(entry.getKey(), entry.getValue());
+        }
+        RequestDispatcher dispatcher = request.getRequestDispatcher(modelView.getUrl());
+        dispatcher.forward(request, response);
+    } else {
+        out.println("Type de données non reconnu");
+    }
+
+} catch (Exception e) {
+    // // Gestion des erreurs
+    erreur = (erreur.isEmpty()) ? "Erreur" : erreur; 
+    detail = (detail.isEmpty()) ? e.getMessage() : detail;
+
+    // Générez dynamiquement la page d'erreur
+    out.println("<html>");
+    out.println("<head><title>Erreur</title></head>");
+    out.println("<body>");
+    out.println("<h1>" + erreur + "</h1>");
+    out.println("<p>" + detail + "</p>");
+    out.println("</body>");
+    out.println("</html>");
+
+
+    // RequestDispatcher dispatcher = request.getRequestDispatcher("/mg/itu/prom16/erreurweb/erreur.jsp");
+    // dispatcher.forward(request, response);
+} finally {
+    out.close(); // Toujours fermer le PrintWriter
+}
+}
+
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
