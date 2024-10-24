@@ -227,6 +227,7 @@ try {
         }
     }
 
+
     private Object[] getMethodParameters(Method method, HttpServletRequest request) throws Exception {
         Parameter[] parameters = method.getParameters();
         Object[] parameterValues = new Object[parameters.length];
@@ -235,15 +236,48 @@ try {
             try {
                 if (parameters[i].isAnnotationPresent(Param.class)) {
                     Param param = parameters[i].getAnnotation(Param.class);
-                    String paramValue = request.getParameter(param.value());
-
-                    // Vérifiez si le paramètre est nul ou vide
+                     
                     if (param == null) {
                         throw new Exception("ETU2777 Le paramètre " + param.value() + " est manquant.");
                     }
 
-                    parameterValues[i] = paramValue; // En supposant que tous les paramètres sont des chaînes pour simplifier
+                    if(parameters[i].getType().equals(Part.class)){
+                        try {
+                            Part filePart = request.getPart(param.value());
+                            String fileName = filePart.getSubmittedFileName();
+                        
+                            // Définir le répertoire où enregistrer le fichier
+                            String uploadDirectory = "C:/uploads/";
+                            File uploadDir = new File(uploadDirectory);
+                        
+                            // Vérifier si le répertoire existe, sinon le créer
+                            if (!uploadDir.exists()) {
+                                uploadDir.mkdirs(); // Crée le répertoire et ses parents si nécessaire
+                            }
+                        
+                            File file = new File(uploadDirectory, fileName);
+                        
+                            // Enregistrer le fichier
+                            try (InputStream input = filePart.getInputStream();
+                                 FileOutputStream output = new FileOutputStream(file)) {
+                                byte[] buffer = new byte[1024];
+                                int bytesRead;
+                                while ((bytesRead = input.read(buffer)) != -1) {
+                                    output.write(buffer, 0, bytesRead);
+                                }
+                            }
+                            parameterValues[i] = filePart;
+                        } catch (Exception e) {
+                            e.printStackTrace(); // Affiche l'erreur dans la console pour le débogage
+                        }                        
+                        // String fileName = getFileName(filePart);
+                    }
+                    else{
+                        String paramValue = request.getParameter(param.value());
+                        parameterValues[i] = paramValue; // En supposant que tous les paramètres sont des chaînes pour simplifier
+                    }
                 }
+                
                 if (parameters[i].isAnnotationPresent(RequestObject.class)) {
                     parameterValues[i] = RequestMapper.mapRequestToObject(request, parameters[i].getType());
                 }
