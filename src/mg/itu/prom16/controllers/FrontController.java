@@ -68,8 +68,8 @@ public class FrontController extends HttpServlet {
             erreur = error;
             detail = "Une erreur est survenue lors du traitement de la requête.";
             throw new Exception(detail);
-        } else if (!lien.containsKey(controllerSearched)) {
-            erreur = "Erreur 2777";
+        } else if (!lien.containsKey(contr
+            erreur = "Erreur 404";
             detail = "Méthode non trouvée : " + controllerSearched;
             throw new Exception(detail);
         }
@@ -163,8 +163,6 @@ public class FrontController extends HttpServlet {
             out.println("</div>");
             out.println("</body>");
             out.println("</html>");
-
-
 
     } finally {
         out.close(); // Toujours fermer le PrintWriter
