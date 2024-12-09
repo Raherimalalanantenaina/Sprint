@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.net.URLDecoder;
@@ -67,7 +68,7 @@ public class FrontController extends HttpServlet {
             erreur = error;
             detail = "Une erreur est survenue lors du traitement de la requête.";
             throw new Exception(detail);
-        } else if (!lien.containsKey(controllerSearched)) {
+        } else if (!lien.containsKey(contr
             erreur = "Erreur 404";
             detail = "Méthode non trouvée : " + controllerSearched;
             throw new Exception(detail);
@@ -139,21 +140,30 @@ public class FrontController extends HttpServlet {
 
     } catch (Exception e) {
         // // Gestion des erreurs
-        erreur = (erreur.isEmpty()) ? "Erreur" : erreur; 
-        detail = (detail.isEmpty()) ? e.getMessage() : detail;
+        erreur = "Une Erreur Nantenaina";
+        detail = e.getMessage();
  
         // Générez dynamiquement la page d'erreur
-        out.println("<html>");
-        out.println("<head><title>Erreur</title></head>");
-        out.println("<body>");
-        out.println("<h1>" + erreur + "</h1>");
-        out.println("<p>" + detail + "</p>");
-        out.println("</body>");
-        out.println("</html>");
+// Générez dynamiquement la page d'erreur avec du CSS
+            out.println("<html>");
+            out.println("<head>");
+            out.println("<title>Erreur</title>");
+            // Ajout de CSS intégré pour styliser la page
+            out.println("<style>");
+            out.println("body { font-family: Arial, sans-serif; background-color: #f8f9fa; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }");
+            out.println(".error-container { background-color: #ffffff; border: 1px solid #e0e0e0; padding: 30px; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); max-width: 600px; text-align: center; }");
+            out.println("h1 { color: #dc3545; font-size: 2em; margin-bottom: 20px; }");
+            out.println("p { color: #6c757d; font-size: 1.1em; }");
+            out.println("</style>");
+            out.println("</head>");
+            out.println("<body>");
+            out.println("<div class='error-container'>");
+            out.println("<h1>" + erreur + "</h1>");
+            out.println("<p>" + detail + "</p>");
+            out.println("</div>");
+            out.println("</body>");
+            out.println("</html>");
 
-
-        // RequestDispatcher dispatcher = request.getRequestDispatcher("/mg/itu/prom16/erreurweb/erreur.jsp");
-        // dispatcher.forward(request, response);
     } finally {
         out.close(); // Toujours fermer le PrintWriter
     }
